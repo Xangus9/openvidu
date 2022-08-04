@@ -3,12 +3,14 @@ on:
   push:
   
   workflow_dispatch:
-
 jobs:
-  build: 
+  prepareTestingEnvironment:
+    
+  Build1: 
+    needs: prepareTestingEnvironment
     runs-on: ${{matrix.os}}
     container: 
-      image: openvidu/openvidu-test-e2e
+      image: openvidu/openvidu-test-e2e #SHOULD CHANGE
     strategy:
       fail-fast: false
       matrix:
@@ -25,3 +27,13 @@ jobs:
     #Compila los test con maven
     - name: Build native with Maven
       run: mvn -B package
+    - name: OpenVidu Browser Build
+      run: |
+        #!/bin/bash -xe
+        cd openvidu/openvidu-browser
+        npm install --quiet --unsafe-perm
+        npm run build --quiet
+        npm pack --quiet
+        cp openvidu-browser-*.tgz /opt/openvidu
+        
+        
