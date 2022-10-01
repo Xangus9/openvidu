@@ -11,7 +11,7 @@ jobs: #Solo los jobs trabajan en paralelo, los steps son secuenciales
     needs: prepareTestingEnvironment
     runs-on: ${{matrix.os}}
     container: 
-      image: openvidu/openvidu-test-e2e #SHOULD CHANGE
+      image: openvidu/openvidu-test-e2e #PROBABLY CHANGE
     strategy:
       fail-fast: false
       matrix:
