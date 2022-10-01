@@ -28,6 +28,8 @@ jobs: #Solo los jobs trabajan en paralelo, los steps son secuenciales
     #Compila los test con maven
     - name: Build native with Maven
       run: mvn -B package
+
+    #Realiza el comando
     - name: OpenVidu Browser Build
       run: |
         #!/bin/bash -xe
@@ -36,3 +38,15 @@ jobs: #Solo los jobs trabajan en paralelo, los steps son secuenciales
         npm run build --quiet
         npm pack --quiet
         cp openvidu-browser-*.tgz /opt/openvidu
+
+  OpenVidu_Node_Client_build:
+    - needs: prepareTestingEnvironment
+    - name: build
+      run: |
+        #!/bin/bash -xe
+        cd openvidu/openvidu-node-client
+        npm install --quiet --unsafe-perm
+        npm run build --quiet
+        npm pack --quiet
+        cp openvidu-node-client-*.tgz /opt/openvidu
+
