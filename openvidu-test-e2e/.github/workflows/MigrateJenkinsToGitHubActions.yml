@@ -2,7 +2,7 @@ name: MigrateJenkinsToGitHubActions
 on: 
   push:
   
-  workflow_dispatch:
+  #workflow_dispatch:
 jobs: #Solo los jobs trabajan en paralelo, los steps son secuenciales
   #No se si se podra usar lo que viene en esta pagina https://www.provartesting.com/documentation/devops/continuous-integration/github-actions/parallel-execution-in-github-actions-using-job-matrix/
   prepareTestingEnvironment:
