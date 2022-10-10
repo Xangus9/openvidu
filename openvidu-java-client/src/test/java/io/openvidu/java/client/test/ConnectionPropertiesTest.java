@@ -51,6 +51,12 @@ public class ConnectionPropertiesTest extends TestCase {
 
 		jsonString = "{'type':'IPCAM','rtspUri':'file://your.camera.ip.sdp'}";
 		ConnectionProperties.fromJson(mapFromJsonString(jsonString)).build();
+
+		jsonString = "{'type':'IPCAM','rtspUri':'http://your.camera.ip.sdp'}";
+		ConnectionProperties.fromJson(mapFromJsonString(jsonString)).build();
+
+		jsonString = "{'type':'IPCAM','rtspUri':'https://your.camera.ip.sdp'}";
+		ConnectionProperties.fromJson(mapFromJsonString(jsonString)).build();
 	}
 
 	public void testFromJsonError() {
@@ -73,9 +79,6 @@ public class ConnectionPropertiesTest extends TestCase {
 		assertException(map, "customIceServers");
 
 		map = mapFromJsonString("{'type':'IPCAM','rtspUri':'NOT_A_VALID_RTSP_URI'}");
-		assertException(map, "rtspUri");
-
-		map = mapFromJsonString("{'type':'IPCAM','rtspUri':'https://domain.com'}");
 		assertException(map, "rtspUri");
 
 		map = mapFromJsonString("{'type':'IPCAM','rtspUri':'filse://your.camera.ip.sdp'}");

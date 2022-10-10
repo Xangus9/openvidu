@@ -125,8 +125,8 @@ public class OpenviduConfig {
 	@Value("#{'${spring.profiles.active:}'.length() > 0 ? '${spring.profiles.active:}'.split(',') : \"default\"}")
 	protected String springProfile;
 
-	@Value("${DEV_CONTAINER:false}")
-	private boolean devContainer;
+	@Value("${FORCE_PLAIN_HTTP:false}")
+	private boolean forcePlainHttp;
 
 	// Config properties
 
@@ -204,6 +204,8 @@ public class OpenviduConfig {
 	private boolean openviduAllowTranscoding;
 
 	private String dotenvPath;
+
+	private boolean openviduDev = false;
 
 	// Media Nodes private IPs and Public IPs
 	// If defined, they will be configured as public IPs of Kurento or Mediasoup
@@ -291,8 +293,8 @@ public class OpenviduConfig {
 		return this.openviduRecordingPath;
 	}
 
-	public String getOpenViduRemoteRecordingPath() {
-		return getOpenViduRecordingPath();
+	public String getOpenViduRecordingPath(String key) {
+		return this.openviduRecordingPath;
 	}
 
 	public boolean getOpenViduRecordingPublicAccess() {
@@ -443,6 +445,10 @@ public class OpenviduConfig {
 
 	public boolean isOpenViduSecret(String secret) {
 		return secret.equals(this.getOpenViduSecret());
+	}
+
+	public boolean isOpenViduDev() {
+		return this.openviduDev;
 	}
 
 	public boolean openviduRecordingCustomLayoutChanged(String path) {
@@ -634,6 +640,10 @@ public class OpenviduConfig {
 
 		webrtcIceServersBuilders = loadWebrtcIceServers("OPENVIDU_WEBRTC_ICE_SERVERS");
 
+		Boolean openviduDevAux = asOptionalBoolean("OPENVIDU_DEV");
+		if (openviduDevAux != null) {
+			openviduDev = openviduDevAux;
+		}
 	}
 
 	private void checkCertificateType() {
@@ -698,16 +708,9 @@ public class OpenviduConfig {
 		final String property = "DOMAIN_OR_PUBLIC_IP";
 		String domain = asOptionalInetAddress(property);
 
-		// TODO: remove when possible deprecated OPENVIDU_DOMAIN_OR_PUBLIC_IP
-		if (domain == null || domain.isEmpty()) {
-			domain = asOptionalInetAddress("OPENVIDU_DOMAIN_OR_PUBLIC_IP");
-			this.configProps.put("DOMAIN_OR_PUBLIC_IP", domain);
-			this.configProps.remove("OPENVIDU_DOMAIN_OR_PUBLIC_IP");
-		}
-
 		if (domain != null && !domain.isEmpty()) {
 			this.domainOrPublicIp = domain;
-			this.openviduPublicUrl = (devContainer ? "http://" : "https://") + domain;
+			this.openviduPublicUrl = (forcePlainHttp ? "http://" : "https://") + domain;
 			if (this.httpsPort != null && this.httpsPort != 443) {
 				this.openviduPublicUrl += (":" + this.httpsPort);
 			}
@@ -882,6 +885,15 @@ public class OpenviduConfig {
 
 	protected String asOptionalString(String property) {
 		return getValue(property);
+	}
+
+	protected Boolean asOptionalBoolean(String property) {
+		Boolean value = null;
+		String strValue = this.getValue(property, false);
+		if (strValue != null) {
+			value = Boolean.parseBoolean(strValue);
+		}
+		return value;
 	}
 
 	protected String asOptionalStringAndNullIfBlank(String property) {

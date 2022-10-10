@@ -19,10 +19,10 @@ import { OpenViduEdition } from '../../models/openvidu.model';
 })
 export class OpenViduService {
 	private ovEdition: OpenViduEdition;
-	protected OV: OpenVidu = null;
-	protected OVScreen: OpenVidu = null;
-	protected webcamSession: Session = null;
-	protected screenSession: Session = null;
+	protected OV: OpenVidu;
+	protected OVScreen: OpenVidu;
+	protected webcamSession: Session;
+	protected screenSession: Session;
 	protected videoSource = undefined;
 	protected audioSource = undefined;
 	protected log: ILogger;
@@ -166,14 +166,14 @@ export class OpenViduService {
 	 * @internal
 	 * Initialize a publisher checking devices saved on storage or if participant have devices available.
 	 */
-	async initDefaultPublisher(targetElement: string | HTMLElement): Promise<Publisher> {
+	async initDefaultPublisher(): Promise<Publisher> {
 		const hasVideoDevices = this.deviceService.hasVideoDeviceAvailable();
 		const hasAudioDevices = this.deviceService.hasAudioDeviceAvailable();
 		const isVideoActive = !this.deviceService.isVideoMuted();
 		const isAudioActive = !this.deviceService.isAudioMuted();
 
-		let videoSource = null;
-		let audioSource = null;
+		let videoSource: string | boolean = false;
+		let audioSource: string | boolean = false;
 
 		if (hasVideoDevices) {
 			// Video is active, assign the device selected
@@ -200,7 +200,7 @@ export class OpenViduService {
 			mirror
 		};
 		if (hasVideoDevices || hasAudioDevices) {
-			const publisher = await this.initPublisher(targetElement, properties);
+			const publisher = await this.initPublisher(undefined, properties);
 			this.participantService.setMyCameraPublisher(publisher);
 			this.participantService.updateLocalParticipant();
 			return publisher;
@@ -287,7 +287,15 @@ export class OpenViduService {
 	 */
 	private async publishVideoAux(publisher: Publisher, publish: boolean): Promise<void> {
 		if (!!publisher) {
-			await publisher.publishVideo(publish, true);
+			let resource: boolean | MediaStreamTrack = true;
+			if(publish){
+				// Forcing restoration with a custom media stream (the older one instead the default)
+				const currentDeviceId = this.deviceService.getCameraSelected()?.device;
+				const mediaStream =	await this.createMediaStream({videoSource: currentDeviceId, audioSource: false});
+				resource = mediaStream.getVideoTracks()[0];
+			}
+
+			await publisher.publishVideo(publish, resource);
 			this.participantService.updateLocalParticipant();
 		}
 	}
@@ -325,7 +333,7 @@ export class OpenViduService {
 
 			const properties: PublisherProperties = {
 				videoSource: ScreenType.SCREEN,
-				audioSource: hasAudioDevicesAvailable ? this.deviceService.getMicrophoneSelected().device : null,
+				audioSource: hasAudioDevicesAvailable ? this.deviceService.getMicrophoneSelected().device : false,
 				publishVideo: true,
 				publishAudio: hasAudio,
 				mirror: false
@@ -450,7 +458,6 @@ export class OpenViduService {
 		}
 	}
 
-	//TODO: Uncomment this section when replaceTrack issue is fixed
 	private async createMediaStream(pp: PublisherProperties): Promise<MediaStream> {
 		let mediaStream: MediaStream;
 		const isFirefoxPlatform = this.platformService.isFirefox();

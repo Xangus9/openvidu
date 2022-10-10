@@ -1,4 +1,4 @@
-import { trigger, state, style, transition, animate } from '@angular/animations';
+import { animate, style, transition, trigger } from '@angular/animations';
 import {
 	AfterViewInit,
 	Component,
@@ -14,9 +14,10 @@ import {
 import { OpenViduErrorName, Session } from 'openvidu-browser';
 import { Subscription } from 'rxjs';
 import {
+	ActivitiesPanelDirective,
+	AdditionalPanelsDirective,
 	ChatPanelDirective,
 	LayoutDirective,
-	AdditionalPanelsDirective,
 	PanelDirective,
 	ParticipantPanelItemDirective,
 	ParticipantPanelItemElementsDirective,
@@ -24,12 +25,11 @@ import {
 	StreamDirective,
 	ToolbarAdditionalButtonsDirective,
 	ToolbarAdditionalPanelButtonsDirective,
-	ToolbarDirective,
-	ActivitiesPanelDirective
+	ToolbarDirective
 } from '../../directives/template/openvidu-angular.directive';
 import { ILogger } from '../../models/logger.model';
 import { OpenViduEdition } from '../../models/openvidu.model';
-import { ParticipantAbstractModel, ParticipantProperties } from '../../models/participant.model';
+import { ParticipantAbstractModel } from '../../models/participant.model';
 import { TokenModel } from '../../models/token.model';
 import { ActionService } from '../../services/action/action.service';
 import { OpenViduAngularConfigService } from '../../services/config/openvidu-angular.config.service';
@@ -72,7 +72,8 @@ import { TranslateService } from '../../services/translate/translate.service';
  * | **streamDisplayAudioDetection**    | `boolean` | {@link StreamDisplayAudioDetectionDirective}    |
  * | **streamSettingsButton**           | `boolean` | {@link StreamSettingsButtonDirective}           |
  * | **participantPanelItemMuteButton** | `boolean` | {@link ParticipantPanelItemMuteButtonDirective} |
- * | **recordingActivityRecordingList** | `{@link RecordingInfo}[]` | {@link RecordingActivityRecordingListDirective} |
+ * | **recordingActivityRecordingList** | `{@link RecordingInfo}[]` | {@link RecordingActivityRecordingsListDirective} |
+ * | **recordingActivityRecordingError** | `any` | {@link RecordingActivityRecordingErrorDirective} |
  *
  * <p class="component-link-text">
  * <span class="italic">See all {@link ApiDirectiveModule API Directives}</span>
@@ -114,7 +115,7 @@ import { TranslateService } from '../../services/translate/translate.service';
 	styleUrls: ['./videoconference.component.css'],
 	animations: [
 		trigger('inOutAnimation', [
-			transition(':enter', [style({ opacity: 0 }), animate('300ms ease-out', style({ opacity: 1 }))]),
+			transition(':enter', [style({ opacity: 0 }), animate('300ms ease-out', style({ opacity: 1 }))])
 			// transition(':leave', [style({ opacity: 1 }), animate('50ms ease-in', style({ opacity: 0.9 }))])
 		])
 	]
@@ -286,7 +287,8 @@ export class VideoconferenceComponent implements OnInit, OnDestroy, AfterViewIni
 			} else {
 				this.log.w('No screen token found. Screenshare feature will be disabled');
 			}
-			this.loading = false;
+
+			this.start();
 		}
 	}
 
@@ -434,32 +436,43 @@ export class VideoconferenceComponent implements OnInit, OnDestroy, AfterViewIni
 
 	async ngOnInit() {
 		this.subscribeToVideconferenceDirectives();
+	}
+
+	private async start() {
 		await this.deviceSrv.forceInitDevices();
 		const nickname = this.externalParticipantName || this.storageSrv.getNickname() || `OpenVidu_User${Math.floor(Math.random() * 100)}`;
-		this.participantService.initLocalParticipant({local: true, nickname});
+		this.participantService.initLocalParticipant({ local: true, nickname });
 		this.openviduService.initialize();
 		if (this.deviceSrv.hasVideoDeviceAvailable() || this.deviceSrv.hasAudioDeviceAvailable()) {
 			await this.initwebcamPublisher();
 		}
 		this.isSessionInitialized = true;
 		this.onParticipantCreated.emit(this.participantService.getLocalParticipant());
+		this.loading = false;
 	}
 
-	private async initwebcamPublisher() {
-		try {
-			const publisher = await this.openviduService.initDefaultPublisher(undefined);
-			if (publisher) {
-				publisher.once('accessDenied', (e: any) => this.handlePublisherError(e));
-				publisher.once('accessAllowed', async () => {
-					await this.handlePublisherSuccess();
-					this.participantReady = true;
-				});
-				// publisher.once('streamPlaying', () => (this.streamPlaying = true));
+	private async initwebcamPublisher(): Promise<void> {
+		return new Promise(async (resolve, reject) => {
+			try {
+				const publisher = await this.openviduService.initDefaultPublisher();
+
+				if (publisher) {
+					publisher.once('accessDenied', (e: any) => {
+						this.handlePublisherError(e);
+						resolve();
+					});
+					publisher.once('accessAllowed', async () => {
+						await this.handlePublisherSuccess();
+						this.participantReady = true;
+						resolve();
+					});
+				}
+			} catch (error) {
+				this.actionService.openDialog(error.name.replace(/_/g, ' '), error.message, true);
+				this.log.e(error);
+				reject();
 			}
-		} catch (error) {
-			this.actionService.openDialog(error.name.replace(/_/g, ' '), error.message, true);
-			this.log.e(error);
-		}
+		});
 	}
 
 	async ngOnDestroy() {
@@ -649,8 +662,9 @@ export class VideoconferenceComponent implements OnInit, OnDestroy, AfterViewIni
 		this.onSessionCreated.emit(session);
 	}
 
-	private handlePublisherError(e: any) {
-		let message: string;
+	private handlePublisherError(e: any): Promise<void> {
+		let message: string = '';
+		console.log('ERROR!', e);
 		if (e.name === OpenViduErrorName.DEVICE_ALREADY_IN_USE) {
 			this.log.w('Video device already in use. Disabling video device...');
 			// Allow access to the room with only mic if camera device is already in use

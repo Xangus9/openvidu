@@ -11,7 +11,7 @@
 #
 #    This file will be overridden when update OpenVidu Platform
 #
-#    Openvidu Version: 2.22.0
+#    Openvidu Version: 2.23.0
 #
 #    Installation Mode: On Premises
 #
@@ -22,7 +22,7 @@ version: '3.1'
 services:
 
     openvidu-server:
-        image: openvidu/openvidu-server:2.22.0
+        image: openvidu/openvidu-server:2.23.0
         restart: on-failure
         network_mode: host
         entrypoint: ['/usr/local/bin/entrypoint.sh']
@@ -45,7 +45,7 @@ services:
                 max-size: "${DOCKER_LOGS_MAX_SIZE:-100M}"
 
     kms:
-        image: ${KMS_IMAGE:-kurento/kurento-media-server:dev-6.18.0}
+        image: ${KMS_IMAGE:-kurento/kurento-media-server:6.18.0}
         restart: always
         network_mode: host
         ulimits:
@@ -65,7 +65,7 @@ services:
                 max-size: "${DOCKER_LOGS_MAX_SIZE:-100M}"
 
     coturn:
-        image: openvidu/openvidu-coturn:2.22.0
+        image: openvidu/openvidu-coturn:2.23.0
         restart: on-failure
         ports:
             - "${COTURN_PORT:-3478}:${COTURN_PORT:-3478}/tcp"
@@ -89,7 +89,7 @@ services:
                 max-size: "${DOCKER_LOGS_MAX_SIZE:-100M}"
 
     nginx:
-        image: openvidu/openvidu-proxy:2.22.0
+        image: openvidu/openvidu-proxy:2.23.0
         restart: always
         network_mode: host
         volumes:
@@ -111,7 +111,7 @@ services:
             - ALLOWED_ACCESS_TO_RESTAPI=${ALLOWED_ACCESS_TO_RESTAPI:-}
             - PROXY_MODE=CE
             - WITH_APP=true
-            - SUPPORT_DEPRECATED_API=${SUPPORT_DEPRECATED_API:-true}
+            - SUPPORT_DEPRECATED_API=${SUPPORT_DEPRECATED_API:-false}
             - REDIRECT_WWW=${REDIRECT_WWW:-false}
             - WORKER_CONNECTIONS=${WORKER_CONNECTIONS:-10240}
             - PUBLIC_IP=${PROXY_PUBLIC_IP:-auto-ipv4}
