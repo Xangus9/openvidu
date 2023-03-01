@@ -40,7 +40,7 @@ jobs: #Solo los jobs trabajan en paralelo, los steps son secuenciales
         cp openvidu-browser-*.tgz /opt/openvidu
 
   OpenVidu_Node_Client_build:
-    - needs: prepareTestingEnvironment
+    #- needs: prepareTestingEnvironment
     - name: build
       run: |
         #!/bin/bash -xe

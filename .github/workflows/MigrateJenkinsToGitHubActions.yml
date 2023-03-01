@@ -8,7 +8,7 @@ jobs: #Solo los jobs trabajan en paralelo, los steps son secuenciales
   #prepareTestingEnvironment:
     
   Build1: 
-    needs: prepareTestingEnvironment
+    #needs: prepareTestingEnvironment
     runs-on: ${{matrix.os}}
     container: 
       image: openvidu/openvidu-test-e2e #PROBABLY CHANGE
@@ -38,15 +38,4 @@ jobs: #Solo los jobs trabajan en paralelo, los steps son secuenciales
         npm run build --quiet
         npm pack --quiet
         cp openvidu-browser-*.tgz /opt/openvidu
-
-  OpenVidu_Node_Client_build:
-    - needs: prepareTestingEnvironment
-    - name: build
-      run: |
-        #!/bin/bash -xe
-        cd openvidu/openvidu-node-client
-        npm install --quiet --unsafe-perm
-        npm run build --quiet
-        npm pack --quiet
-        cp openvidu-node-client-*.tgz /opt/openvidu
 
