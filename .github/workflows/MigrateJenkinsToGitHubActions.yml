@@ -27,6 +27,7 @@ jobs: #Solo los jobs trabajan en paralelo, los steps son secuenciales
         run: mvn -B package
 
   OpenVidu_Browser_Build:
+    runs-on: ubuntu-latest
     needs: prepareTestingEnvironment
     steps:
     # Accion predefinida, que clona el codigo del repo en el runner, siempre existe este cambio.
@@ -52,6 +53,7 @@ jobs: #Solo los jobs trabajan en paralelo, los steps son secuenciales
 
   OpenVidu_Node_Client_build:
     needs: prepareTestingEnvironment
+    runs-on: ubuntu-latest
     steps:
     - name: OpenVidu_Node_Client_build
       run: |
