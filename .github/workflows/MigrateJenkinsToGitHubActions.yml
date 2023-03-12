@@ -28,6 +28,7 @@ jobs: #Solo los jobs trabajan en paralelo, los steps son secuenciales
 
   OpenVidu_Browser_Build:
     runs-on: ubuntu-latest
+    if: ${{ always() }}
     needs: prepareTestingEnvironment
     steps:
     # Accion predefinida, que clona el codigo del repo en el runner, siempre existe este cambio.
@@ -53,6 +54,7 @@ jobs: #Solo los jobs trabajan en paralelo, los steps son secuenciales
 
   OpenVidu_Node_Client_build:
     needs: prepareTestingEnvironment
+    if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
     - name: OpenVidu_Node_Client_build
